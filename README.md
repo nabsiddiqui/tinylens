@@ -1,11 +1,6 @@
 <p align="center">
-  <img src="logo.png" width="400" alt="tinylens logo" />
-</p>
-
-<h1 align="center">tinylens</h1>
-
-<p align="center">
-<strong>Tidy image analysis for digital humanities and film studies</strong>
+  <img src="logo.png" width="350" alt="tinylens logo" /><br>
+  <strong>Tidy image analysis for digital humanities and film studies</strong>
 </p>
 
 <p align="center">
@@ -15,130 +10,69 @@
 
 ---
 
-**tinylens** is an R package for image-first analysis targeting digital humanities and film studies. It provides a tidy, pipeable API for analyzing visual content without requiring Python dependencies.
+**tinylens** is an R package for analyzing images and videos in a way that fits naturally into tidyverse workflows. Every function takes a tibble and returns a tibble with added columns—no list-columns, no nested structures, just tidy data.
 
-## Features
+## What It Does
 
-- 📹 **Video Processing**: Shot detection, frame extraction, pacing analysis
-- 🎨 **Color Analysis**: 11 functions for brightness, saturation, warmth, dominant colors
+- 📹 **Video Processing**: Detect shots, extract frames, compute pacing metrics
+- 🎨 **Color Analysis**: Brightness, saturation, warmth, dominant colors (11 functions)
 - 📐 **Composition**: Rule of thirds, visual complexity, center bias
-- 🎬 **Film Metrics**: Shot scale classification (9 types), camera angles (6 types), ASL
-- 🤖 **Local LLM**: Ollama integration for image descriptions (no cloud APIs)
-- 🔊 **Audio**: RMS, ZCR, spectral analysis per shot
-
-All functions return **tidy tibbles** with one row per image.
+- 🎬 **Film Metrics**: Shot scale (9 types), camera angles (6 types), ASL
+- 🤖 **Local LLM**: Image descriptions via Ollama (no cloud APIs)
+- 🔊 **Audio**: Loudness and spectral features per shot
 
 ## Installation
 
 ```r
-# Install from GitHub
 devtools::install_github("nabsiddiqui/tinylens")
 ```
 
-## Quick Start
+## Quick Example
 
 ```r
 library(tinylens)
 
-# Extract shots from a video
-shots <- video_extract_shots("my_film.mp4")
-
-# Add color and composition features
-results <- shots |>
+# Analyze a video
+shots <- video_extract_shots("my_film.mp4") |>
   extract_brightness() |>
   extract_colourfulness() |>
-  extract_warmth() |>
-  extract_rule_of_thirds() |>
   film_classify_angle()
 
-# Compute film metrics
-film_compute_asl(results)        # Average shot length
-film_summarize_scales(results)   # Shot scale distribution
+# Get summary stats
+film_compute_asl(shots)          # Average shot length
+film_summarize_scales(shots)     # Shot scale distribution
 ```
 
-## Core Functions
-
-### Video Processing
-| Function | Description |
-|----------|-------------|
-| `video_extract_shots()` | Detect shots with timing and scale classification |
-| `video_extract_frames()` | Extract all frames at specified FPS |
-| `video_sample_frames()` | Sample N frames evenly |
-| `video_get_info()` | Video metadata (duration, fps, resolution) |
-
-### Color Analysis (11 functions)
-| Function | Description |
-|----------|-------------|
-| `extract_brightness()` | Mean brightness with standard deviation |
-| `extract_colourfulness()` | Hasler-Süsstrunk colourfulness metric |
-| `extract_color_mean()` | Mean RGB values |
-| `extract_dominant_color()` | K-means dominant color |
-| `extract_warmth()` | Warm/cool tone with tint |
-| ... | And 6 more |
-
-### Film Metrics (5 functions)
-| Function | Description |
-|----------|-------------|
-| `film_classify_scale()` | 9 shot types (ECU, CU, MCU, MS, CS, MFS, FS, WS, EWS) |
-| `film_classify_angle()` | 6 camera angles (eye_level, high, low, birds_eye, worms_eye, dutch) |
-| `film_compute_asl()` | Average Shot Length with median |
-| `film_compute_rhythm()` | Editing rhythm metrics |
-| `film_summarize_scales()` | Shot scale distribution |
-
-### Composition (4 functions)
-| Function | Description |
-|----------|-------------|
-| `extract_fluency_metrics()` | Processing fluency score |
-| `extract_rule_of_thirds()` | Composition adherence |
-| `extract_visual_complexity()` | Edge-based complexity |
-| `extract_center_bias()` | Center vs periphery salience |
-
-### LLM Vision (requires Ollama)
-| Function | Description |
-|----------|-------------|
-| `llm_describe()` | Natural language image descriptions |
-| `llm_classify()` | Category classification |
-| `llm_sentiment()` | Mood analysis |
-| `llm_recognize()` | Object recognition |
-
-## Output Example
+Output is a tibble with one row per shot and 60+ feature columns:
 
 ```r
 # A tibble: 15 × 62
-   id           shot_id duration shot_scale brightness colourfulness warmth ...
-   <chr>          <int>    <dbl> <chr>           <dbl>         <dbl>  <dbl> ...
- 1 frame_000001       1     12.5 MS              0.456          34.2  0.123 ...
- 2 frame_000026       2      8.0 CU              0.512          28.9  0.089 ...
- 3 frame_000042       3     15.3 WS              0.389          45.1  0.234 ...
+   id         shot_id duration shot_scale brightness colourfulness warmth ...
+   <chr>        <int>    <dbl> <chr>           <dbl>         <dbl>  <dbl> ...
+ 1 frame_001        1     12.5 MS              0.456          34.2  0.123 ...
+ 2 frame_026        2      8.0 CU              0.512          28.9  0.089 ...
 ```
 
-## Dependencies
+## Function Overview
 
-### Required
-magick, tibble, dplyr, purrr, cli, rlang, fs, tools
+| Category | Functions | What They Add |
+|----------|-----------|---------------|
+| **Video** | `video_extract_shots()`, `video_sample_frames()` | shot_id, duration, start_time, end_time |
+| **Color** | `extract_brightness()`, `extract_colourfulness()`, `extract_warmth()`, ... | brightness, colourfulness, warmth, tint, dominant_hex |
+| **Film** | `film_classify_scale()`, `film_classify_angle()` | shot_scale, camera_angle |
+| **Composition** | `extract_rule_of_thirds()`, `extract_center_bias()` | thirds_score, center_bias |
+| **LLM** | `llm_describe()`, `llm_classify()` | description, category |
 
-### Optional
-| Package | For |
-|---------|-----|
-| av | Video processing |
-| tuneR | Audio analysis |
-| torch/torchvision | Neural embeddings |
-| image.libfacedetection | Face detection |
-| httr2, base64enc, jsonlite | LLM functions |
+## Required Packages
 
-## Documentation
+magick, tibble, dplyr, purrr, cli
 
-See the [Getting Started vignette](vignettes/getting-started.Rmd) for detailed examples.
+**Optional**: av (video), tuneR (audio), torch (embeddings), httr2 (LLM)
 
 ## License
 
 MIT © Nabeel Siddiqui
 
-## Citation
+---
 
-If you use tinylens in academic research, please cite:
-
-```
-Siddiqui, N. (2026). tinylens: Tidy Image Analysis for Digital Humanities.
-R package. https://github.com/nabsiddiqui/tinylens
-```
+*If you use tinylens in research, please cite: Siddiqui, N. (2026). tinylens: Tidy Image Analysis for Digital Humanities. https://github.com/nabsiddiqui/tinylens*
