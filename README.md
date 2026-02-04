@@ -4,6 +4,11 @@
   <em>Tidy image-first analysis for digital humanities and film studies</em>
 </p>
 
+<p align="center">
+<a href="https://github.com/nabsiddiqui/tinylens"><img src="https://img.shields.io/badge/R--CMD--check-passing-brightgreen" alt="R-CMD-check"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
+
 ---
 
 ## Installation
@@ -112,7 +117,9 @@ shots <- video_extract_shots("movie.mp4", threshold = 0.4)
 # Returns: shot_id, start_time, end_time, duration, shot_scale
 ```
 
-### Shot Scale Classification (9 StudioBinder Types)
+### Shot Scale Classification
+
+Tinylens classifies each shot into **9 standard cinematography scales** based on [StudioBinder's industry guide](https://www.studiobinder.com/blog/ultimate-guide-to-camera-shots/):
 
 | Scale | Abbrev | What's in Frame |
 |-------|--------|-----------------|
@@ -260,8 +267,29 @@ write.csv(shots, "shot_data.csv")
 
 ---
 
+## Related Projects
+
+- [Cinemetrics](http://www.cinemetrics.lv/) - Film shot length database
+- [FilmColors](https://filmcolors.org/) - Historical film color analysis
+- [VIAN](https://www.vian.app/) - Video annotation for film analysis
+
+---
+
 ## References
 
 - **ASL**: Salt, B. (2009). *Film Style and Technology: History and Analysis*
 - **Colourfulness**: Hasler & Süsstrunk (2003). "Measuring Colorfulness in Natural Images"
 - **Shot Scales**: [StudioBinder Camera Shot Guide](https://www.studiobinder.com/blog/ultimate-guide-to-camera-shots/)
+
+---
+
+## License
+
+MIT © Nabeel Siddiqui
+
+## Citation
+
+```
+Siddiqui, N. (2026). tinylens: Tidy Image Analysis for Digital Humanities.
+R package. https://github.com/nabsiddiqui/tinylens
+```
