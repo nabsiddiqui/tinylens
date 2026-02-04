@@ -1,25 +1,10 @@
 <p align="center">
-  <img src="logo.png" width="350" alt="tinylens logo" /><br>
-  <strong>Tidy image analysis for digital humanities and film studies</strong>
-</p>
-
-<p align="center">
-<a href="https://github.com/nabsiddiqui/tinylens"><img src="https://img.shields.io/badge/R--CMD--check-passing-brightgreen" alt="R-CMD-check"></a>
-<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <img src="logo.png" alt="Tinylens Logo" width="350">
+  <br>
+  <em>Tidy image-first analysis for digital humanities and film studies</em>
 </p>
 
 ---
-
-**tinylens** is an R package for analyzing images and videos in a way that fits naturally into tidyverse workflows. Every function takes a tibble and returns a tibble with added columns—no list-columns, no nested structures, just tidy data.
-
-## What It Does
-
-- 📹 **Video Processing**: Detect shots, extract frames, compute pacing metrics
-- 🎨 **Color Analysis**: Brightness, saturation, warmth, dominant colors (11 functions)
-- 📐 **Composition**: Rule of thirds, visual complexity, center bias
-- 🎬 **Film Metrics**: Shot scale (9 types), camera angles (6 types), ASL
-- 🤖 **Local LLM**: Image descriptions via Ollama (no cloud APIs)
-- 🔊 **Audio**: Loudness and spectral features per shot
 
 ## Installation
 
@@ -27,52 +12,256 @@
 devtools::install_github("nabsiddiqui/tinylens")
 ```
 
-## Quick Example
+**Optional dependencies** for enhanced features:
+```r
+install.packages("av")        # Video processing
+install.packages("tuneR")     # Audio analysis
+install.packages("image.libfacedetection", repos = "https://bnosac.r-universe.dev")  # Face detection
+install.packages(c("torch", "torchvision"))  # Neural embeddings
+```
+
+---
+
+## Quick Start
 
 ```r
 library(tinylens)
 
-# Analyze a video
-shots <- video_extract_shots("my_film.mp4") |>
-  extract_brightness() |>
-  extract_colourfulness() |>
-  film_classify_angle()
+# Load images from folder
+images <- load_images("path/to/images/")
 
-# Get summary stats
-film_compute_asl(shots)          # Average shot length
-film_summarize_scales(shots)     # Shot scale distribution
+# Or from specific files
+images <- load_images(c("image1.jpg", "image2.png"))
+
+# Result: tl_images tibble with one row per image
+images
+#> ── Tinylens Image Collection ─────────────────────
+#> 50 images
+#> Formats: jpeg: 50
+#> Dimensions: 1280-1280 x 536-536
 ```
-
-Output is a tibble with one row per shot and 60+ feature columns:
-
-```r
-# A tibble: 15 × 62
-   id         shot_id duration shot_scale brightness colourfulness warmth ...
-   <chr>        <int>    <dbl> <chr>           <dbl>         <dbl>  <dbl> ...
- 1 frame_001        1     12.5 MS              0.456          34.2  0.123 ...
- 2 frame_026        2      8.0 CU              0.512          28.9  0.089 ...
-```
-
-## Function Overview
-
-| Category | Functions | What They Add |
-|----------|-----------|---------------|
-| **Video** | `video_extract_shots()`, `video_sample_frames()` | shot_id, duration, start_time, end_time |
-| **Color** | `extract_brightness()`, `extract_colourfulness()`, `extract_warmth()`, ... | brightness, colourfulness, warmth, tint, dominant_hex |
-| **Film** | `film_classify_scale()`, `film_classify_angle()` | shot_scale, camera_angle |
-| **Composition** | `extract_rule_of_thirds()`, `extract_center_bias()` | thirds_score, center_bias |
-| **LLM** | `llm_describe()`, `llm_classify()` | description, category |
-
-## Required Packages
-
-magick, tibble, dplyr, purrr, cli
-
-**Optional**: av (video), tuneR (audio), torch (embeddings), httr2 (LLM)
-
-## License
-
-MIT © Nabeel Siddiqui
 
 ---
 
-*If you use tinylens in research, please cite: Siddiqui, N. (2026). tinylens: Tidy Image Analysis for Digital Humanities. https://github.com/nabsiddiqui/tinylens*
+## Color Analysis
+
+```r
+images <- images |>
+  extract_brightness() |>        # brightness, brightness_std
+  extract_colourfulness() |>     # colourfulness (Hasler & Süsstrunk M3)
+  extract_warmth() |>            # warmth, tint
+  extract_dominant_color() |>    # dominant_color_r/g/b, dominant_color_hex
+  extract_hue_histogram()        # dominant_hue, hue_entropy
+```
+
+| Function | What It Measures | Example Use |
+|----------|-----------------|-------------|
+| `extract_brightness()` | How light/dark (0-255) | Night vs. day scenes |
+| `extract_colourfulness()` | How vivid the colors | Wes Anderson vs. gritty drama |
+| `extract_warmth()` | Orange vs. blue tones | Morning vs. night |
+| `extract_dominant_color()` | Single most common color | Scene classification |
+
+---
+
+## Composition & Fluency
+
+```r
+images <- images |>
+  extract_fluency_metrics() |>   # simplicity, symmetry_h, symmetry_v, balance
+  extract_rule_of_thirds() |>    # rule_of_thirds score
+  extract_center_bias()          # center_bias, center_brightness
+```
+
+| Function | What It Measures | Example Use |
+|----------|-----------------|-------------|
+| `extract_fluency_metrics()` | Symmetry and balance | Classical vs. dynamic composition |
+| `extract_rule_of_thirds()` | Alignment with thirds | Professional photography score |
+| `extract_center_bias()` | Subject centering | Portrait vs. landscape framing |
+
+---
+
+## Video Analysis
+
+```r
+library(av)
+
+# Get video info
+video_get_info("movie.mp4")
+#> duration: 237s, fps: 24, resolution: 1280x536
+
+# Extract frames at 1 fps
+frames <- video_extract_frames("movie.mp4", fps = 1)
+
+# Or sample 100 evenly-spaced frames
+frames <- video_sample_frames("movie.mp4", n = 100)
+
+# Analyze like regular images
+frames <- frames |>
+  extract_brightness() |>
+  extract_colourfulness()
+```
+
+---
+
+## Shot Detection
+
+```r
+# Automatically detect shot boundaries
+shots <- video_extract_shots("movie.mp4", threshold = 0.4)
+
+# Returns: shot_id, start_time, end_time, duration, shot_scale
+```
+
+### Shot Scale Classification (9 StudioBinder Types)
+
+| Scale | Abbrev | What's in Frame |
+|-------|--------|-----------------|
+| Extreme Close-Up | ECU | Eyes, mouth, or detail |
+| Close-Up | CU | Face fills frame |
+| Medium Close-Up | MCU | Head and shoulders |
+| Medium Shot | MS | Waist up |
+| Cowboy Shot | CS | Mid-thigh up |
+| Medium Full Shot | MFS | Knees up |
+| Full Shot | FS | Full body |
+| Wide Shot | WS | Full body + environment |
+| Extreme Wide Shot | EWS | Small figure in landscape |
+
+---
+
+## Film Metrics
+
+```r
+library(dplyr)
+
+# Pacing metrics
+shots |> summarise(
+  asl = mean(duration),              # Average shot length
+  shot_count = n(),
+  shots_per_minute = n() / (sum(duration) / 60)
+)
+```
+
+**ASL Reference Values:**
+| Style | Typical ASL |
+|-------|-------------|
+| Fast action (Mad Max) | 2-3 seconds |
+| Modern blockbuster | 3-5 seconds |
+| Classical Hollywood | 5-8 seconds |
+| Art cinema | 10-30+ seconds |
+
+---
+
+## Audio Analysis
+
+```r
+# Add audio features to shots
+shots <- extract_audio_features(shots, "movie.mp4")
+
+# Columns: audio_rms, audio_peak, audio_zcr, audio_silence_ratio,
+#          audio_low_freq_energy, audio_high_freq_energy, audio_spectral_centroid
+```
+
+| Column | What It Measures |
+|--------|-----------------|
+| `audio_rms` | Loudness (0-1) |
+| `audio_peak` | Loudest moment |
+| `audio_zcr` | Noisy/percussive content |
+| `audio_low_freq_energy` | Bass content |
+| `audio_high_freq_energy` | Treble content |
+
+---
+
+## Detection
+
+```r
+images <- detect_skin_tones(images)   # skin_tone_prop (0-1)
+images <- detect_faces(images)        # face_count, face_areas (requires package)
+```
+
+---
+
+## LLM Vision (Ollama)
+
+```bash
+# Setup
+brew install ollama && ollama serve
+ollama pull qwen2.5vl:7b
+```
+
+```r
+llm_check_dependencies()
+
+images <- llm_describe(images)    # Natural language descriptions
+images <- llm_classify(images, categories = c("indoor", "outdoor"))
+images <- llm_sentiment(images)   # Mood analysis
+images <- llm_recognize(images)   # Object recognition
+```
+
+---
+
+## Complete Pipeline
+
+```r
+library(tinylens)
+library(dplyr)
+
+# 1. Extract and analyze frames
+frames <- video_extract_frames("movie.mp4", fps = 1) |>
+  extract_brightness() |>
+  extract_colourfulness() |>
+  extract_warmth()
+
+# 2. Detect shots with audio
+shots <- video_extract_shots("movie.mp4") |>
+  extract_audio_features("movie.mp4")
+
+# 3. Compute metrics
+pacing <- shots |> summarise(
+  asl = mean(duration),
+  shot_count = n(),
+  avg_loudness = mean(audio_rms, na.rm = TRUE)
+)
+
+# 4. Export
+write.csv(frames, "frame_analysis.csv")
+write.csv(shots, "shot_data.csv")
+```
+
+---
+
+## Function Reference
+
+### Core I/O
+`load_images()`, `is_tl_images()`
+
+### Video (`video_*`)
+`video_get_info()`, `video_extract_frames()`, `video_sample_frames()`, `video_extract_shots()`, `video_extract_shot_frames()`
+
+### Film (`film_*`)
+`film_classify_scale()` (per-image shot scale classification)
+
+### Color (`extract_*`)
+`extract_brightness()`, `extract_color_mean()`, `extract_color_median()`, `extract_color_mode()`, `extract_saturation()`, `extract_colourfulness()`, `extract_warmth()`, `extract_dominant_color()`, `extract_color_variance()`, `extract_color_moments()`, `extract_hue_histogram()`
+
+### Composition
+`extract_fluency_metrics()`, `extract_rule_of_thirds()`, `extract_visual_complexity()`, `extract_center_bias()`
+
+### Detection
+`detect_faces()`, `detect_skin_tones()`
+
+### Audio
+`extract_audio_features()`, `extract_audio_rms()`
+
+### Embeddings
+`extract_embeddings()`, `extract_color_histogram()`
+
+### LLM Vision
+`llm_describe()`, `llm_classify()`, `llm_sentiment()`, `llm_recognize()`, `llm_check_ollama()`, `llm_list_models()`, `llm_pull_model()`, `llm_check_dependencies()`
+
+---
+
+## References
+
+- **ASL**: Salt, B. (2009). *Film Style and Technology: History and Analysis*
+- **Colourfulness**: Hasler & Süsstrunk (2003). "Measuring Colorfulness in Natural Images"
+- **Shot Scales**: [StudioBinder Camera Shot Guide](https://www.studiobinder.com/blog/ultimate-guide-to-camera-shots/)
