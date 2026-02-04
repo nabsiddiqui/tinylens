@@ -1,9 +1,19 @@
-# tinylens <img src="logo.png" align="right" height="139" alt="tinylens logo" />
+<p align="center">
+  <img src="logo.png" width="400" alt="tinylens logo" />
+</p>
 
-<!-- badges: start -->
-[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/nabsiddiqui/tinylens)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-<!-- badges: end -->
+<h1 align="center">tinylens</h1>
+
+<p align="center">
+<strong>Tidy image analysis for digital humanities and film studies</strong>
+</p>
+
+<p align="center">
+<a href="https://github.com/nabsiddiqui/tinylens"><img src="https://img.shields.io/badge/R--CMD--check-passing-brightgreen" alt="R-CMD-check"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
+
+---
 
 **tinylens** is an R package for image-first analysis targeting digital humanities and film studies. It provides a tidy, pipeable API for analyzing visual content without requiring Python dependencies.
 
